@@ -179,6 +179,35 @@ function LegalPage({ data, goHome }) {
   );
 }
 
+const INSTALL_TEXT = `אני רוצה להוסיף לאתר כפתור נגישות. בצע זאת בצורה מבודדת והפיכה כך שיהיה קל להחזיר אחורה אם תהיה בעיה:
+
+1. הוסף את שורת הסקריפט הבאה בדיוק כמו שהיא (אל תשנה את ה-src ואל תפצל אותה), פעם אחת בלבד, ממש לפני תג הסגירה </body>:
+<script src="https://cdn.jsdelivr.net/gh/Eladshi1326/NegiShot@main/dist/accessibility-widget.js" data-a11y-widget data-position="bottom-right" data-color="#2b50e0" defer></script>
+
+2. עטוף אותה בסימני הערה ברורים כדי שיהיה קל למצוא ולהסיר:
+<!-- ACCESSIBILITY WIDGET - START -->
+<script src="https://cdn.jsdelivr.net/gh/Eladshi1326/NegiShot@main/dist/accessibility-widget.js" data-a11y-widget data-position="bottom-right" data-color="#2b50e0" defer></script>
+<!-- ACCESSIBILITY WIDGET - END -->
+
+3. אל תשנה שום קוד אחר, אל תבצע פירמוט מחדש של הקובץ, ואל תתקין React או חבילות נוספות. הקובץ עצמאי וכולל הכול.
+
+4. היכן להוסיף לפי סוג הפרויקט:
+   HTML רגיל או Vite או CRA: בקובץ ה-HTML הראשי (index.html) לפני </body>.
+   Next.js (App Router): בתוך app/layout בתוך ה-<body>, אפשר עם next/script ו-strategy="afterInteractive", עם אותם data-*.
+
+5. בסיום כתוב לי באיזה קובץ ובאיזו שורה הוספת, כדי שאם יידרש נוכל להסיר רק את הבלוק המסומן ולחזור למצב הקודם. ודא שהאתר עולה תקין, שכפתור נגישות עגול מופיע בפינה הימנית-תחתונה, ושכלום אחר לא נשבר.`;
+
+function fallbackCopy(text, onDone) {
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.top = '-1000px'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    if (onDone) onDone();
+  } catch (e) { /* */ }
+}
+
 export default function App() {
   const [route, setRoute] = useState('home');
   const [open, setOpen] = useState(0);
@@ -189,12 +218,28 @@ export default function App() {
   const pendingRef = useRef(null);
   const modalRef = useRef(null);
   const lastFocus = useRef(null);
+  const [copied, setCopied] = useState(false);
+  const clickTimesRef = useRef([]);
+  const copyTimerRef = useRef(null);
 
   const openModal = (key) => { setSent(false); setEmail(''); setModal({ key: key || 'nav' }); };
   const closeModal = () => setModal(null);
   const submit = (e) => { e.preventDefault(); setSent(true); };
   const go = (r) => { setMenuOpen(false); setRoute(r); };
   const goHome = () => { setMenuOpen(false); pendingRef.current = null; setRoute('home'); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const onLogoClick = () => {
+    const now = Date.now();
+    clickTimesRef.current = clickTimesRef.current.filter((t) => now - t < 700).concat(now);
+    if (clickTimesRef.current.length >= 3) {
+      clickTimesRef.current = [];
+      const show = () => { setCopied(true); window.clearTimeout(copyTimerRef.current); copyTimerRef.current = window.setTimeout(() => setCopied(false), 2400); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(INSTALL_TEXT).then(show).catch(() => fallbackCopy(INSTALL_TEXT, show));
+      } else { fallbackCopy(INSTALL_TEXT, show); }
+      return;
+    }
+    goHome();
+  };
   const navTo = (id) => {
     setMenuOpen(false);
     if (route === 'home') { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: 'smooth' }); }
@@ -265,7 +310,7 @@ export default function App() {
 
       <header className="nav">
         <div className="nav-in">
-          <button className="brand" onClick={goHome} aria-label="negishot, מעבר לעמוד הבית"><Logo /></button>
+          <button className="brand" onClick={onLogoClick} aria-label="negishot, מעבר לעמוד הבית"><Logo /></button>
           <nav className={'nav-links' + (menuOpen ? ' open' : '')} aria-label="ניווט ראשי">
             <button onClick={() => navTo('features')}>יכולות</button>
             <button onClick={() => navTo('tools')}>הכלים</button>
@@ -464,7 +509,7 @@ export default function App() {
       </main>
 
       <footer className="foot">
-        <button className="brand" onClick={goHome} aria-label="negishot, מעבר לעמוד הבית"><Logo /></button>
+        <button className="brand" onClick={onLogoClick} aria-label="negishot, מעבר לעמוד הבית"><Logo /></button>
         <nav className="foot-links" aria-label="ניווט תחתון">
           <button onClick={() => go('about')}>אודות</button>
           <button onClick={() => go('accessibility')}>הצהרת נגישות</button>
@@ -499,6 +544,7 @@ export default function App() {
           </div>
         </div>
       )}
+      {copied && <div className="copied-toast" role="status">הטקסט הועתק ללוח</div>}
     </div>
   );
 }
