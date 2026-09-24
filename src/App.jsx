@@ -181,19 +181,27 @@ function LegalPage({ data, goHome }) {
 
 const INSTALL_TEXT = `אני רוצה להוסיף לאתר כפתור נגישות. בצע זאת בצורה מבודדת והפיכה כך שיהיה קל להחזיר אחורה אם תהיה בעיה:
 
-1. הוסף את שורת הסקריפט הבאה בדיוק כמו שהיא (אל תשנה את ה-src ואל תפצל אותה), פעם אחת בלבד, ממש לפני תג הסגירה </body>:
-<script src="https://cdn.jsdelivr.net/gh/Eladshi1326/NegiShot@main/dist/accessibility-widget.js" data-a11y-widget data-position="bottom-right" data-color="#2b50e0" defer></script>
-
-2. עטוף אותה בסימני הערה ברורים כדי שיהיה קל למצוא ולהסיר:
+1. הוסף את הבלוק הבא בדיוק כמו שהוא (כולל סימני ההערה), פעם אחת בלבד, ממש לפני תג הסגירה </body>. זהו "טוען" קטן שדואג שהכפתור יתעדכן אצל כל המבקרים תוך יום:
 <!-- ACCESSIBILITY WIDGET - START -->
-<script src="https://cdn.jsdelivr.net/gh/Eladshi1326/NegiShot@main/dist/accessibility-widget.js" data-a11y-widget data-position="bottom-right" data-color="#2b50e0" defer></script>
+<script>
+(function () {
+  window.A11yWidgetConfig = { position: 'bottom-right', color: '#2b50e0' };
+  var v = new Date().toISOString().slice(0, 10);
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/gh/Eladshi1326/NegiShot@main/dist/accessibility-widget.js?v=' + v;
+  s.setAttribute('data-a11y-widget', '');
+  document.body.appendChild(s);
+})();
+</script>
 <!-- ACCESSIBILITY WIDGET - END -->
 
-3. אל תשנה שום קוד אחר, אל תבצע פירמוט מחדש של הקובץ, ואל תתקין React או חבילות נוספות. הקובץ עצמאי וכולל הכול.
+2. אם כבר קיים באתר בלוק בין ACCESSIBILITY WIDGET - START ל-END (או שורת script ישנה שמכילה accessibility-widget.js), החלף אותו בבלוק החדש. אל תשאיר שניים.
+
+3. אל תשנה שום קוד אחר, אל תבצע פירמוט מחדש של הקובץ, ואל תתקין React או חבילות נוספות. הקובץ עצמאי וכולל הכול. כדי לשנות צבע או מיקום משנים רק את position ו-color בתוך A11yWidgetConfig.
 
 4. היכן להוסיף לפי סוג הפרויקט:
    HTML רגיל או Vite או CRA: בקובץ ה-HTML הראשי (index.html) לפני </body>.
-   Next.js (App Router): בתוך app/layout בתוך ה-<body>, אפשר עם next/script ו-strategy="afterInteractive", עם אותם data-*.
+   Next.js (App Router): בתוך app/layout בתוך ה-<body>, עם next/script שיש לו id (למשל a11y-loader) ו-strategy="afterInteractive", והקוד שבתוך תג ה-script כתוכן הפנימי שלו.
 
 5. בסיום כתוב לי באיזה קובץ ובאיזו שורה הוספת, כדי שאם יידרש נוכל להסיר רק את הבלוק המסומן ולחזור למצב הקודם. ודא שהאתר עולה תקין, שכפתור נגישות עגול מופיע בפינה הימנית-תחתונה, ושכלום אחר לא נשבר.`;
 
